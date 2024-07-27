@@ -1,0 +1,295 @@
+'''
+
+import sqlite3
+
+from random import randint, choice
+
+from faker import Faker
+
+
+
+# Connect to the social_network database (created in Lab 7)
+
+con = sqlite3.connect('social_network.db')
+
+cur = con.cursor()
+
+
+
+# SQL query to create the 'relationships' table
+
+create_relationships_tbl_query = """
+
+CREATE TABLE IF NOT EXISTS relationships
+
+(
+
+id INTEGER PRIMARY KEY,
+
+person1_id INTEGER NOT NULL,
+
+person2_id INTEGER NOT NULL,
+
+type TEXT NOT NULL,
+
+start_date DATE NOT NULL,
+
+FOREIGN KEY (person1_id) REFERENCES people (id),
+
+FOREIGN KEY (person2_id) REFERENCES people (id)
+
+);
+
+"""
+
+
+
+# Execute the SQL query to create the 'relationships' table
+
+cur.execute(create_relationships_tbl_query)
+
+
+
+# SQL query to insert a row of data into the relationships table
+
+add_relationship_query = """
+
+INSERT INTO relationships
+
+(
+
+person1_id,
+
+person2_id,
+
+type,
+
+start_date
+
+)
+
+VALUES (?, ?, ?, ?);
+
+"""
+
+
+
+fake = Faker()
+
+
+
+# Populate the relationships table with 100 fake relationships
+
+for _ in range(100):
+
+    # Randomly select the first person in the relationship
+
+    person1_id = randint(1, 200)
+
+
+
+    # Randomly select the second person in the relationship
+
+    # Loop ensures the person will not be in a relationship with themselves
+
+    person2_id = randint(1, 200)
+
+    while person2_id == person1_id:
+
+        person2_id = randint(1, 200)
+
+
+
+    # Randomly select a relationship type
+
+    rel_type = choice(('friend', 'spouse', 'partner', 'relative'))
+
+
+
+    # Randomly select a relationship start date between now and 50 years ago
+
+    start_date = fake.date_between(start_date='-50y', end_date='today')
+
+
+
+    # Create tuple of data for the new relationship
+
+    new_relationship = (person1_id, person2_id, rel_type, start_date)
+
+
+
+    # Add the new relationship to the DB
+
+    cur.execute(add_relationship_query, new_relationship)
+
+
+
+# Commit changes and close the connection
+
+con.commit()
+
+con.close()
+
+'''
+
+'''
+
+import sqlite3
+
+import pandas as pd
+
+
+
+# Connect to the social_network database
+
+con = sqlite3.connect('social_network.db')
+
+cur = con.cursor()
+
+
+
+# SQL query to get all married couples (relationship type is 'spouse')
+
+married_couples_query = """
+
+SELECT person1.name AS person1_name, person2.name AS person2_name, start_date
+
+FROM relationships
+
+JOIN people person1 ON person1_id = person1.id
+
+JOIN people person2 ON person2_id = person2.id
+
+WHERE type = 'spouse';
+
+"""
+
+
+
+# Execute the query and get all results
+
+cur.execute(married_couples_query)
+
+married_couples = cur.fetchall()
+
+
+
+# Close the connection
+
+con.close()
+
+
+
+# Convert the query results to a pandas DataFrame
+
+married_couples_df = pd.DataFrame(married_couples, columns=['Person 1', 'Person 2', 'Start Date'])
+
+
+
+# Generate a CSV file containing names and relationship start date of all married couples
+
+married_couples_df.to_csv('married_couples.csv', index=False)
+
+'''
+
+
+
+import sqlite3
+
+from faker import Faker
+
+
+
+# Connect to the social_network database
+
+con = sqlite3.connect('social_network.db')
+
+cur = con.cursor()
+
+
+
+# SQL query to create the 'people' table
+
+create_people_tbl_query = """
+
+CREATE TABLE IF NOT EXISTS people
+
+(
+
+id INTEGER PRIMARY KEY,
+
+name TEXT NOT NULL,
+
+age INTEGER NOT NULL,
+
+city TEXT NOT NULL
+
+);
+
+"""
+
+
+
+# Execute the SQL query to create the 'people' table
+
+cur.execute(create_people_tbl_query)
+
+
+
+# SQL query to insert a row of data into the people table
+
+add_person_query = """
+
+INSERT INTO people
+
+(
+
+name,
+
+age,
+
+city
+
+)
+
+VALUES (?, ?, ?);
+
+"""
+
+
+
+fake = Faker()
+
+
+
+# Populate the people table with 200 fake people
+
+for _ in range(200):
+
+    # Generate fake data for a person
+
+    name = fake.name()
+
+    age = fake.random_int(min=18, max=90, step=1)
+
+    city = fake.city()
+
+
+
+    # Create tuple of data for the new person
+
+    new_person = (name, age, city)
+
+
+
+    # Add the new person to the DB
+
+    cur.execute(add_person_query, new_person)
+
+
+
+# Commit changes and close the connection
+
+con.commit()
+
+con.close()
